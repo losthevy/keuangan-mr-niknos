@@ -66,6 +66,34 @@
   .lhead{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;margin-bottom:4px}
   .hide{display:none}
   @media (max-width:560px){.grid{grid-template-columns:1fr}.saldo .num{font-size:1.8rem}}
+
+ .hbtn{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+ .tools{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 12px}
+ .tools input{flex:1 1 100%}
+ .tools select{flex:1 1 45%;min-width:0;font-size:.85rem}
+ .bud{margin:6px 0 8px}
+ .barw{height:8px;border-radius:9px;background:var(--line);overflow:hidden;flex:1}
+ .barw i{display:block;height:100%;background:var(--main)}
+ .barw i.over{background:var(--bad)}
+ .ch{display:flex;gap:8px;align-items:flex-end;margin-top:8px}
+ .ch>div{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;min-width:0}
+ .bs{display:flex;gap:3px;align-items:flex-end;height:92px}
+ .bs i{width:16px;border-radius:4px 4px 0 0;min-height:2px}
+ .bs .i1{background:var(--main)}.bs .i2{background:var(--bad)}
+ .ch small{color:var(--soft);font-size:.72rem}
+ .hb{display:grid;grid-template-columns:100px 1fr auto;gap:8px;align-items:center;font-size:.85rem;margin:8px 0}
+ .dot{position:absolute;left:-30px;top:18px;width:12px;height:12px;border-radius:50%;box-shadow:0 0 0 3px var(--bg)}
+ .dot.in{background:var(--main)}.dot.out{background:var(--bad)}
+ .tl{position:relative;margin:4px 0 0 6px;padding-left:22px;border-left:2px solid var(--line)}
+ .tl-m{font-size:.8rem;font-weight:700;color:var(--soft);margin:18px 0 8px}
+ .tl-i{position:relative;margin-bottom:10px}
+ .tl-i .card{margin:0;padding:12px 14px}
+ [data-theme=dark]{--bg:#111815;--card:#1a221e;--ink:#e6ece8;--soft:#9aa7a0;--line:#2a352f;--main:#3fbf93;--main-soft:#173a2d;--warn:#f0a35c;--warn-soft:#3a2810;--bad:#ff8a80;--bad-soft:#3b1b19}
+ [data-theme=dark] select,[data-theme=dark] input,[data-theme=dark] .tabs button,[data-theme=dark] .btn.alt,[data-theme=dark] dialog{background:var(--card)}
+ [data-theme=dark] .flat{background:#252f2a}
+ [data-theme=dark] .bar{background:rgba(17,24,21,.94)}
+ [data-theme=dark] .saldo,[data-theme=dark] .tabs button[aria-selected=true],[data-theme=dark] .btn:not(.alt):not(.ghost){color:#07231a}
+ [data-theme=dark] .note{color:#f3c99c}[data-theme=dark] .note.good{color:#9be3c6}
 </style>
 </head>
 <body>
@@ -75,9 +103,9 @@
       <h1>Cash Tracker Mr Niknos</h1>
       <div class="muted" id="sync">Memuat data...</div>
     </div>
-    <label class="who" style="display:flex;font-weight:400">Saya
+    <div class="hbtn"><label class="who" style="display:flex;font-weight:400">Saya
       <select id="me" aria-label="Pilih nama kamu"></select>
-    </label>
+    </label><button class="btn alt sm" id="bAlat">Alat</button><button class="btn alt sm" id="bTema" aria-label="Ganti tema">🌙</button></div>
   </header>
 
   <div id="setup" class="note hide">Aplikasi belum tersambung ke Google Sheets. Isi <b>API_URL</b> di bagian atas skrip pada index.html dengan URL Web app dari Apps Script.</div>
@@ -90,10 +118,16 @@
 
   <nav class="tabs" role="tablist">
     <button role="tab" data-tab="ringkas" aria-selected="true">Ringkasan</button>
+    <button role="tab" data-tab="timeline" aria-selected="false">Timeline</button>
     <button role="tab" data-tab="lomba" aria-selected="false">Lomba</button>
     <button role="tab" data-tab="utang" aria-selected="false">Utang</button>
     <button role="tab" data-tab="riwayat" aria-selected="false">Riwayat</button>
   </nav>
+  <div class="tools hide" id="tools">
+    <input id="q" type="search" placeholder="Cari jenis, lomba, keterangan, nama..." aria-label="Cari transaksi">
+    <select id="fTipe" aria-label="Filter tipe"><option value="">Masuk dan keluar</option><option value="in">Kas masuk</option><option value="out">Pengeluaran</option></select>
+    <select id="fPer" aria-label="Filter periode"><option value="">Semua periode</option><option value="bulan">Bulan ini</option><option value="30">30 hari terakhir</option></select>
+  </div>
 
   <main id="view"></main>
 </div>
@@ -127,6 +161,20 @@
   <div id="prev" class="note good hide"></div>
   <div class="acts"><button type="button" class="btn alt" data-close>Batal</button><button class="btn" value="ok">Simpan</button></div>
 </form></dialog>
+
+<dialog id="dAlat"><div style="padding:20px;display:grid;gap:10px">
+  <h2>Alat bantu</h2>
+  <button class="btn alt" id="aCsv">Ekspor semua transaksi (.csv)</button>
+  <button class="btn alt" id="aRekap">Salin rekap kas untuk WhatsApp</button>
+  <button class="btn alt" id="aUtang">Salin pengingat utang</button>
+  <label>Target saldo kas (Rp)<input id="inTarget" inputmode="numeric" autocomplete="off" placeholder="Opsional"></label>
+  <label>Batas saldo minimum (Rp)<input id="inMin" inputmode="numeric" autocomplete="off" placeholder="Opsional, muncul peringatan bila di bawahnya"></label>
+  <button class="btn" id="aSimpan">Simpan target</button>
+  <button class="btn alt" id="aBackup">Backup anggaran dan target (.json)</button>
+  <label class="btn alt" style="text-align:center;display:block">Pulihkan backup<input type="file" id="aRestore" accept=".json" hidden></label>
+  <button class="btn alt" id="aTutup">Tutup</button>
+  <div class="muted" style="font-size:.78rem">Anggaran lomba, target, dan batas minimum tersimpan di perangkat ini.</div>
+</div></dialog>
 
 <div id="toast" role="status"></div>
 
@@ -186,7 +234,7 @@ function rowKeluar(x, showLomba){
   </div><div class="amt out">-${rp(x.jumlah)}</div></div>`;
 }
 
-function vRingkas(){
+function vRingkas0(){
   const src = {}; D.kas.forEach(k => src[k.sumber] = (src[k.sumber] || 0) + Number(k.jumlah));
   const srcRows = Object.entries(src).sort((a,b) => b[1]-a[1]).map(([s,n]) =>
     `<div class="row"><div class="l"><div class="t">${esc(s)}</div></div><div class="amt in">${rp(n)}</div></div>`).join("");
@@ -214,7 +262,7 @@ function vLomba(){
     const tot = xs.reduce((a,x) => a + Number(x.jumlah), 0);
     const selesai = l.status === "Selesai";
     return `<div class="card"><div class="lhead"><div><h2 style="margin:0">${esc(l.nama)}</h2>
-      <span class="chip ${selesai ? "flat" : "ok"}">${selesai ? "Selesai" : "Aktif"}</span></div><div class="amt">${rp(tot)}</div></div>
+      <span class="chip ${selesai ? "flat" : "ok"}">${selesai ? "Selesai" : "Aktif"}</span></div><div class="amt">${rp(tot)}</div></div>${anggaranBlok(l,tot)}
       ${xs.map(x => rowKeluar(x, false)).join("") || '<div class="empty">Belum ada pengeluaran.</div>'}
       <div style="margin-top:8px"><button class="btn alt sm" data-lomba="${esc(l.id)}" data-selesai="${selesai ? 0 : 1}">${selesai ? "Aktifkan lagi" : "Tandai selesai"}</button>
       ${xs.length ? "" : `<button class="btn ghost" data-del="lomba" data-id="${esc(l.id)}">Hapus lomba</button>`}</div></div>`;
@@ -225,7 +273,7 @@ function vLomba(){
     + (lain.length ? `<div class="card"><h2>Pengeluaran di luar lomba</h2>${lain.map(x => rowKeluar(x, false)).join("")}</div>` : "");
 }
 
-function vUtang(){
+function vUtang0(){
   const saya = me();
   const item = u => {
     const x = D.pengeluaran.find(p => p.id === u.pengeluaran_id) || {};
@@ -244,22 +292,6 @@ function vUtang(){
       return `<div class="card"><div class="lhead"><h2 style="margin:0">${esc(n)}</h2><div class="amt ${sisa ? "out" : "in"}">${sisa ? "Sisa " + rp(sisa) : "Lunas semua"}</div></div>
         ${us.map(item).join("") || '<div class="empty">Tidak ada catatan utang.</div>'}</div>`;
     }).join("");
-}
-
-function vRiwayat(){
-  const all = [
-    ...D.kas.map(k => ({ t:k.tanggal, h:`<div class="row"><div class="l"><div class="t">${esc(k.sumber)}${k.keterangan ? " · " + esc(k.keterangan) : ""}</div>
-      <div class="muted">Dicatat ${esc(k.dicatat_oleh)} · ${tgl(k.tanggal)}</div><button class="btn ghost" data-del="kas" data-id="${esc(k.id)}">Hapus</button></div><div class="amt in">+${rp(k.jumlah)}</div></div>` })),
-    ...D.pengeluaran.map(x => ({ t:x.tanggal, h:rowKeluar(x, true) }))
-  ].sort((a,b) => new Date(b.t) - new Date(a.t));
-  return `<div class="card"><h2>Semua arus kas</h2>${all.map(a => a.h).join("") || '<div class="empty">Belum ada catatan.</div>'}</div>`;
-}
-
-function render(){
-  $("#saldo").textContent = rp(D.saldo);
-  const sisa = D.utang.filter(u => u.status !== "Lunas").reduce((a,u) => a + Number(u.jumlah), 0);
-  $("#saldoSub").textContent = `Masuk ${rp(D.totalMasuk)}, terpakai ${rp(D.totalDariKas)}` + (sisa ? `. Utang antaranggota belum lunas ${rp(sisa)}` : "");
-  $("#view").innerHTML = ({ ringkas:vRingkas, lomba:vLomba, utang:vUtang, riwayat:vRiwayat })[tab]();
 }
 
 /* ---------- Interaksi ---------- */
@@ -318,6 +350,154 @@ $("#fKeluar").addEventListener("submit", async e => {
   if (await api({ action:"addPengeluaran", lomba_id: baru ? "" : f.lomba_id.value, lomba_baru: baru ? f.lomba_baru.value : "",
       jenis:f.jenis.value, jumlah:j, keterangan:f.keterangan.value, oleh:f.oleh.value })) { $("#dKeluar").close(); toast("Pengeluaran tercatat"); }
 });
+
+/* ---------- Data lokal & bantu ---------- */
+let M = { bud:{}, target:0, min:0 };
+try { M = { ...M, ...JSON.parse(store.get("niknos_cash_meta") || "{}") }; } catch {}
+const saveM = () => store.set("niknos_cash_meta", JSON.stringify(M));
+const p2 = n => String(n).padStart(2, "0");
+const ym = d => d.getFullYear() + "-" + p2(d.getMonth() + 1);
+const iso = t => { const d = new Date(t); return ym(d) + "-" + p2(d.getDate()); };
+const bln = k => new Date(k.slice(0,4), +k.slice(5) - 1, 1).toLocaleDateString("id-ID", { month:"short" });
+const sum = (a, f) => a.reduce((s, x) => s + f(x), 0);
+const fmtIn = i => { const n = num(i.value); i.value = n ? new Intl.NumberFormat("id-ID").format(n) : ""; };
+
+function events(){
+  const e = [
+    ...D.kas.map(k => ({ t:k.tanggal, tipe:"in", n:+k.jumlah, kas:+k.jumlah, j:k.sumber, ket:k.keterangan || "", oleh:k.dicatat_oleh, lomba:"", src:k })),
+    ...D.pengeluaran.map(x => ({ t:x.tanggal, tipe:"out", n:+x.jumlah, kas:+x.dari_kas, j:x.jenis, ket:x.keterangan || "", oleh:x.dibayar_oleh, lomba:lombaNama(x.lomba_id), src:x }))
+  ].sort((a, b) => new Date(a.t) - new Date(b.t));
+  let s = 0; e.forEach(x => { s += x.tipe === "in" ? x.n : -x.kas; x.saldo = s; });
+  return e;
+}
+function saring(){
+  const q = $("#q").value.trim().toLowerCase(), t = $("#fTipe").value, p = $("#fPer").value, n = new Date();
+  return events().filter(x => {
+    if (t && x.tipe !== t) return false;
+    const d = new Date(x.t);
+    if (p === "bulan" && ym(d) !== ym(n)) return false;
+    if (p === "30" && (n - d) / 864e5 > 30) return false;
+    return !q || [x.j, x.ket, x.lomba, x.oleh].join(" ").toLowerCase().includes(q);
+  }).reverse();
+}
+function netUtang(){
+  const m = {};
+  D.utang.filter(u => u.status !== "Lunas").forEach(u => {
+    const x = D.pengeluaran.find(p => p.id === u.pengeluaran_id);
+    if (!x || u.nama === x.dibayar_oleh) return;
+    const k = u.nama + ">" + x.dibayar_oleh; m[k] = (m[k] || 0) + Number(u.jumlah);
+  });
+  const r = [];
+  D.anggota.forEach(a => D.anggota.forEach(b => { if (a < b) {
+    const ab = m[a + ">" + b] || 0, ba = m[b + ">" + a] || 0;
+    if (ab > ba) r.push({ dari:a, ke:b, n:ab - ba }); else if (ba > ab) r.push({ dari:b, ke:a, n:ba - ab });
+  } }));
+  return r;
+}
+function anggaranBlok(l, tot){
+  const a = M.bud[l.id] || 0;
+  return `<div class="bud">${a ? `<div class="barw"><i class="${tot > a ? "over" : ""}" style="width:${Math.min(100, Math.round(tot / a * 100))}%"></i></div>
+    <div class="muted">${rp(tot)} dari anggaran ${rp(a)} · ${tot > a ? "melebihi " + rp(tot - a) : "sisa " + rp(a - tot)}</div>` : '<div class="muted">Anggaran belum diatur</div>'}
+    <button class="btn ghost" data-bud="${esc(l.id)}">${a ? "Ubah" : "Atur"} anggaran</button></div>`;
+}
+
+/* ---------- Tampilan baru ---------- */
+function vRingkas(){
+  const ev = events(), n = new Date(), k0 = ym(n), kp = ym(new Date(n.getFullYear(), n.getMonth() - 1, 1));
+  const out = ev.filter(x => x.tipe === "out"), inn = ev.filter(x => x.tipe === "in");
+  const ob = k => sum(out.filter(x => ym(new Date(x.t)) === k), x => x.n);
+  const bulan = [];
+  for (let i = 5; i >= 0; i--) { const k = ym(new Date(n.getFullYear(), n.getMonth() - i, 1)); bulan.push({ k, i:sum(inn.filter(x => ym(new Date(x.t)) === k), x => x.n), o:ob(k) }); }
+  const mx = Math.max(1, ...bulan.map(b => Math.max(b.i, b.o)));
+  const jenis = {}; out.forEach(x => jenis[x.j] = (jenis[x.j] || 0) + x.n);
+  const jr = Object.entries(jenis).sort((a, b) => b[1] - a[1]), jt = sum(jr, r => r[1]) || 1;
+  const delta = ob(k0) - ob(kp);
+  return (M.min && D.saldo < M.min ? `<div class="note" style="margin-bottom:12px">Saldo kas di bawah batas minimum ${rp(M.min)}. Saatnya setoran atau kas masuk baru.</div>` : "") +
+  (M.target ? `<div class="card"><h2>Target kas ${rp(M.target)}</h2><div style="display:flex"><div class="barw"><i style="width:${Math.max(0, Math.min(100, D.saldo / M.target * 100))}%"></i></div></div><div class="muted">${D.saldo >= M.target ? "Target tercapai" : "Kurang " + rp(M.target - D.saldo)}</div></div>` : "") +
+  `<div class="grid"><div class="card stat"><div class="muted">Keluar bulan ini</div><div class="n out">${rp(ob(k0))}</div><div class="muted">${delta > 0 ? "naik " : "turun "}${rp(Math.abs(delta))} dari bulan lalu</div></div>
+    <div class="card stat"><div class="muted">Rata-rata per lomba</div><div class="n">${rp(sum(out, x => x.n) / (D.lomba.length || 1))}</div></div>
+    <div class="card stat"><div class="muted">Jumlah transaksi</div><div class="n">${ev.length}</div></div></div>
+  <div class="card"><h2>Arus kas 6 bulan</h2><div class="ch">${bulan.map(b => `<div><div class="bs"><i class="i1" style="height:${Math.round(b.i / mx * 90)}px" title="Masuk ${rp(b.i)}"></i><i class="i2" style="height:${Math.round(b.o / mx * 90)}px" title="Keluar ${rp(b.o)}"></i></div><small>${bln(b.k)}</small></div>`).join("")}</div>
+    <div class="muted" style="margin-top:6px"><span class="in">■</span> masuk &nbsp;<span class="out">■</span> keluar</div></div>
+  <div class="card"><h2>Pengeluaran per jenis</h2>${jr.map(([j, v]) => `<div class="hb"><span>${esc(j)}</span><div class="barw"><i style="width:${Math.round(v / jt * 100)}%"></i></div><b>${rp(v)}</b></div>`).join("") || '<div class="empty">Belum ada pengeluaran.</div>'}</div>
+  <div class="card"><h2>Talangan pribadi per anggota</h2>${D.anggota.map(a => `<div class="row"><div class="l"><div class="t">${esc(a)}</div></div><div class="amt">${rp(sum(out.filter(x => x.oleh === a), x => x.n - x.kas))}</div></div>`).join("")}</div>` + vRingkas0();
+}
+
+function vTimeline(){
+  const a = saring();
+  if (!a.length) return '<div class="card empty">Tidak ada transaksi yang cocok.</div>';
+  const tot = {};
+  a.forEach(x => { const k = ym(new Date(x.t)); (tot[k] = tot[k] || { i:0, o:0 })[x.tipe === "in" ? "i" : "o"] += x.n; });
+  let h = '<div class="tl">', b = "";
+  a.forEach(x => {
+    const d = new Date(x.t), k = ym(d);
+    if (k !== b) { b = k; h += `<div class="tl-m">${d.toLocaleDateString("id-ID", { month:"long", year:"numeric" }).toUpperCase()} · <span class="in">+${rp(tot[k].i)}</span> <span class="out">-${rp(tot[k].o)}</span></div>`; }
+    h += `<div class="tl-i"><i class="dot ${x.tipe}"></i><div class="card"><div class="lhead"><div class="t" style="font-weight:600;overflow-wrap:anywhere">${esc(x.j)}${x.lomba ? " · " + esc(x.lomba) : ""}</div><div class="amt ${x.tipe}">${x.tipe === "in" ? "+" : "-"}${rp(x.n)}</div></div>
+      <div class="muted">${tgl(x.t)} · ${esc(x.oleh)}${x.ket ? " · " + esc(x.ket) : ""}</div>
+      <div class="muted">Saldo setelah: <b>${rp(x.saldo)}</b>${x.tipe === "out" && x.n > x.kas ? " · talangan " + rp(x.n - x.kas) : ""}</div></div></div>`;
+  });
+  return h + "</div>";
+}
+
+function vUtang(){
+  const r = netUtang();
+  return `<div class="card"><h2>Siapa bayar ke siapa</h2><div class="muted">Setelah saling dikurangi</div>${r.map(x => `<div class="row"><div class="l"><div class="t">${esc(x.dari)} → ${esc(x.ke)}</div></div><div class="amt out">${rp(x.n)}</div></div>`).join("") || '<div class="empty">Semua utang sudah lunas.</div>'}
+    ${r.length ? '<button class="btn alt sm" data-wa="1">Salin pengingat penagihan</button>' : ""}</div>` + vUtang0();
+}
+
+function vRiwayat(){
+  const a = saring();
+  return `<div class="card"><h2>Semua arus kas (${a.length})</h2>${a.map(x => x.tipe === "in"
+    ? `<div class="row"><div class="l"><div class="t">${esc(x.j)}${x.ket ? " · " + esc(x.ket) : ""}</div><div class="muted">Dicatat ${esc(x.oleh)} · ${tgl(x.t)}</div><button class="btn ghost" data-del="kas" data-id="${esc(x.src.id)}">Hapus</button></div><div class="amt in">+${rp(x.n)}</div></div>`
+    : rowKeluar(x.src, true)).join("") || '<div class="empty">Belum ada catatan.</div>'}</div>`;
+}
+
+function render(){
+  $("#saldo").textContent = rp(D.saldo);
+  const sisa = D.utang.filter(u => u.status !== "Lunas").reduce((a, u) => a + Number(u.jumlah), 0);
+  $("#saldoSub").textContent = `Masuk ${rp(D.totalMasuk)}, terpakai ${rp(D.totalDariKas)}` + (sisa ? `. Utang antaranggota belum lunas ${rp(sisa)}` : "");
+  $("#tools").classList.toggle("hide", !["timeline", "riwayat"].includes(tab));
+  $("#view").innerHTML = ({ ringkas:vRingkas, timeline:vTimeline, lomba:vLomba, utang:vUtang, riwayat:vRiwayat })[tab]();
+}
+
+/* ---------- Alat bantu ---------- */
+async function salin(t){ try { await navigator.clipboard.writeText(t); toast("Disalin, tinggal tempel"); } catch { toast("Gagal menyalin. Izinkan akses clipboard."); } }
+const hariIni = () => new Date().toLocaleDateString("id-ID", { day:"numeric", month:"long", year:"numeric" });
+const teksUtang = () => { const r = netUtang(); return `*Pengingat Utang Kas* — ${hariIni()}\n` + (r.map(x => `• ${x.dari} → ${x.ke}: ${rp(x.n)}`).join("\n") || "Semua utang sudah lunas.") + `\nSaldo kas tim: ${rp(D.saldo)}`; };
+const teksRekap = () => `*Rekap Kas Tim* — ${hariIni()}\nSaldo: ${rp(D.saldo)}\nTotal masuk: ${rp(D.totalMasuk)}\nTerpakai dari kas: ${rp(D.totalDariKas)}\n\n*Lomba aktif*\n` +
+  (D.lomba.filter(l => l.status !== "Selesai").map(l => { const t = sum(D.pengeluaran.filter(x => x.lomba_id === l.id), x => +x.jumlah), a = M.bud[l.id]; return `• ${l.nama}: ${rp(t)}${a ? " / anggaran " + rp(a) : ""}`; }).join("\n") || "-") + `\n\n` + teksUtang();
+function unduh(nama, teks, tipe){ const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([teks], { type:tipe })); a.download = nama; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000); }
+
+["#q", "#fTipe", "#fPer"].forEach(x => $(x).addEventListener("input", render));
+$("#view").addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  if (b.dataset.bud) {
+    const id = b.dataset.bud, v = prompt(`Anggaran ${lombaNama(id)} (Rp). Kosongkan untuk menghapus.`, M.bud[id] || "");
+    if (v === null) return;
+    const n = num(v); if (n) M.bud[id] = n; else delete M.bud[id];
+    saveM(); render();
+  } else if (b.dataset.wa) salin(teksUtang());
+});
+$("#bAlat").onclick = () => { $("#inTarget").value = M.target ? new Intl.NumberFormat("id-ID").format(M.target) : ""; $("#inMin").value = M.min ? new Intl.NumberFormat("id-ID").format(M.min) : ""; $("#dAlat").showModal(); };
+$("#aTutup").onclick = () => $("#dAlat").close();
+["#inTarget", "#inMin"].forEach(x => $(x).addEventListener("input", e => fmtIn(e.target)));
+$("#aSimpan").onclick = () => { M.target = num($("#inTarget").value); M.min = num($("#inMin").value); saveM(); render(); toast("Target tersimpan"); };
+$("#aRekap").onclick = () => salin(teksRekap());
+$("#aUtang").onclick = () => salin(teksUtang());
+$("#aCsv").onclick = () => {
+  const q = v => '"' + String(v ?? "").replace(/"/g, '""') + '"';
+  const rows = [["Tanggal", "Tipe", "Jenis/Sumber", "Lomba", "Keterangan", "Oleh", "Jumlah", "Dari kas", "Saldo setelah"], ...events().map(x => [iso(x.t), x.tipe === "in" ? "Masuk" : "Keluar", x.j, x.lomba, x.ket, x.oleh, x.n, x.kas, x.saldo])];
+  unduh("cash-tracker.csv", "\ufeff" + rows.map(r => r.map(q).join(",")).join("\r\n"), "text/csv"); toast("CSV diunduh");
+};
+$("#aBackup").onclick = () => unduh("cash-tracker-backup.json", JSON.stringify({ meta:M }), "application/json");
+$("#aRestore").onchange = async e => {
+  const f = e.target.files[0]; if (!f) return;
+  try { const j = JSON.parse(await f.text()); if (!j.meta) throw 0; M = { ...M, ...j.meta }; saveM(); render(); toast("Backup dipulihkan"); } catch { toast("File backup tidak valid"); }
+  e.target.value = "";
+};
+const tema = t => { document.documentElement.dataset.theme = t; store.set("niknos_tema", t); $("#bTema").textContent = t === "dark" ? "☀️" : "🌙"; };
+tema(store.get("niknos_tema") || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"));
+$("#bTema").onclick = () => tema(document.documentElement.dataset.theme === "dark" ? "light" : "dark");
 
 /* ---------- Mulai ---------- */
 const opsi = D.anggota.map(n => `<option>${n}</option>`).join("");
